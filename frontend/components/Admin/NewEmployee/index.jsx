@@ -1,9 +1,10 @@
 import { data } from "react-router-dom";
 import AdminLayout from "../../Layout/AdminLayout";
-import { Card, Form, Input, Button, Table, message, Popconfirm } from "antd";
-import { EyeOutlined, EyeInvisibleOutlined, EditOutlined, DeleteOutlined as DeletedOutlined } from '@ant-design/icons';
-import { trimData, http } from "../../../modules/module";
+import { Card, Form, Input, Button, Table, message, Popconfirm, Select } from "antd";
+import { EyeOutlined, EyeInvisibleOutlined, EditOutlined, DeleteOutlined as DeletedOutlined, SearchOutlined } from '@ant-design/icons';
+import { trimData, http, fetchData } from "../../../modules/module";
 import swal from "sweetalert";
+import useSWR from "swr";
 import { useState, useEffect } from "react";
 
 
@@ -19,6 +20,36 @@ const NewEmployee = () => {
     const [getAllEmployees, setAllEmployees] = useState([]);
     const [no, setNo] = useState(0);
     const [edit, setEdit] = useState(null);
+    const [allBranch, setAllBranch] = useState([]);
+    const [finalEmployees, setFinalEmployees] = useState([]);
+
+
+
+
+    //get branch data
+    const { data: branches, error: bError } = useSWR(
+        "/api/branch",
+        fetchData,
+        {
+            revalidateOnFocus: false,
+            revalidateOnReconnect: false,
+            refreshInterval: 12000000
+        }
+    )
+
+    useEffect(() => {
+        if (branches) {
+            let filter = branches && branches?.data.map((item) => ({
+                label: item.branchName,
+                value: item.branchName,
+                key: item.key
+
+            }));
+            setAllBranch(filter);
+        }
+
+    }, [branches])
+
 
 
     //columns for table
@@ -41,9 +72,37 @@ const NewEmployee = () => {
             }
         },
         {
+            title: "User Type",
+            dataIndex: "userType",
+            key: "userType",
+            render: (text) => {
+                if (text === "admin") {
+                    return <span className="!capitalize !text-indigo-500">{text}</span>
+                }
+                else if (text === "employee") {
+                    return <span className="!capitalize !text-green-500">{text}</span>
+                }
+                else {
+                    return <span className="!capitalize !text-red-500">{text}</span>
+                }
+            }
+
+        },
+        {
+            title: "Branch",
+            dataIndex: "branch",
+            key: "branch"
+        },
+        {
             title: "Fullname",
             dataIndex: "fullname",
             key: "fullname"
+        },
+        ,
+        {
+            title: "Email",
+            dataIndex: "email",
+            key: "email"
         },
         {
             title: "Mobile",
@@ -51,15 +110,11 @@ const NewEmployee = () => {
             key: "mobile"
         },
         {
-            title: "Email",
-            dataIndex: "email",
-            key: "email"
-        },
-        {
             title: "Address",
             dataIndex: "address",
             key: "address"
         },
+
         {
             title: "Action",
             dataIndex: "action",
@@ -172,7 +227,8 @@ const NewEmployee = () => {
         try {
             const httpReq = http();
             const { data } = await httpReq.get("/api/users");
-            setAllEmployees(data.data);
+            setAllEmployees(data.data);   //show in table
+            setFinalEmployees(data.data);   //keep the full backup
             console.log(data.data)
         } catch (err) {
             messageApi.warning("Unable to fetch employees!");
@@ -201,12 +257,39 @@ const NewEmployee = () => {
         }
     }
 
+    // search coding
+    const onSearch = (e) => {
+        let value = e.target.value.trim().toLowerCase();
+        let filter = finalEmployees && finalEmployees.filter(emp => {
+            if (emp.fullname.toLowerCase().indexOf(value) != -1) {
+                return emp;
+            }
+            else if (emp.branch.toLowerCase().indexOf(value) != -1) {
+                return emp;
+            }
+            else if (emp.userType.toLowerCase().indexOf(value) != -1) {
+                return emp;
+            }
+            else if (emp.email.toLowerCase().indexOf(value) != -1) {
+                return emp;
+            }
+            else if (emp.address.toLowerCase().indexOf(value) != -1) {
+                return emp;
+            }
+            else if (emp.mobile.toLowerCase().indexOf(value) != -1) {
+                return emp;
+            }
+        });
+        setAllEmployees(filter);
+    }
+
 
     const onFinish = async (values) => {
         try {
             setLoading(true);
             let finalObj = trimData(values);
             finalObj.profile = photo ? photo : "bankImages/dummy.jpeg";
+            finalObj.userType = "employee"
             finalObj.key = finalObj.email;
             console.log(finalObj);
             const httpReq = http();
@@ -255,6 +338,14 @@ const NewEmployee = () => {
                         form={form}
                         onFinish={edit ? onUpdate : onFinish}
                         layout="vertical">
+                        <Item
+                            name="branch"
+                            label="Select Branch"
+                            rules={[{ required: true }]}>
+                            <Select
+                                placeholder="Select branch"
+                                options={allBranch} />
+                        </Item>
                         <Item
                             label="Profile :"
                             name="profile">
@@ -317,7 +408,18 @@ const NewEmployee = () => {
                 <Card
                     className="md:col-span-2"
                     title="Employee List"
-                    style={{ overflowX: "auto" }}>
+                    style={{ overflowX: "auto" }}
+                    extra={
+                        <div>
+                            <Input
+                                placeholder="Search by all"
+                                prefix={<SearchOutlined />}
+                                onChange={onSearch}
+                            />
+                        </div>
+
+                    }
+                >
                     <Table
                         rowKey="email"
                         columns={columns}

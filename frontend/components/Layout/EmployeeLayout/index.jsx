@@ -3,65 +3,20 @@ import {
     MenuFoldOutlined,
     MenuUnfoldOutlined,
     DashboardOutlined,
-    UserOutlined,
-    GiftOutlined,
-    BranchesOutlined,
-    DollarCircleOutlined,
-    LogoutOutlined
 } from '@ant-design/icons';
 import { Button, Layout, Menu, theme } from 'antd';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import Cookies from "universal-cookie";
-
+import { Link, useLocation } from 'react-router-dom';
 const { Header, Sider, Content } = Layout;
-const AdminLayout = ({ children }) => {
-    const navigate = useNavigate();
 
-    const cookies = new Cookies();
+const EmployeeLayout = ({ children }) => {
 
     const { pathname } = useLocation();
-    const logoutFunc = () => {
-        sessionStorage.removeItem("userInfo");
-        cookies.remove("authToken");
-        navigate("/");
-    }
     console.log(pathname);
     const items = [
         {
-            key: '/admin',
+            key: '/employee',
             icon: <DashboardOutlined />,
-            label: <Link to="/admin">Dashboard</Link>,
-        },
-        {
-            key: '/admin/currency',
-            icon: <DollarCircleOutlined />,
-            label: <Link to="/admin/currency">Currency</Link>,
-        },
-        {
-            key: '/admin/branch',
-            icon: <BranchesOutlined />,
-            label: <Link to="/admin/branch">Branch</Link>,
-        },
-
-        {
-            key: '/admin/branding',
-            icon: <GiftOutlined />,
-            label: <Link to="/admin/branding">Brandings</Link>
-        },
-        {
-            key: '/admin/new-employee',
-            icon: <UserOutlined />,
-            label: <Link to="/admin/new-employee">New Employee</Link>
-        },
-        {
-            key: '/admin/logout',
-            icon: <LogoutOutlined />,
-            label: <Button
-                type="text"
-                className="!text-gray-300 !font-semibold"
-                onClick={logoutFunc}
-
-            >Logout</Button>
+            label: <Link to="/employee">Dashboard</Link>,
         }
     ];
     const [collapsed, setCollapsed] = useState(false);
@@ -107,4 +62,4 @@ const AdminLayout = ({ children }) => {
         </Layout>
     );
 };
-export default AdminLayout;
+export default EmployeeLayout;

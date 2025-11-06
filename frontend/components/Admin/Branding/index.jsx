@@ -3,6 +3,7 @@ import AdminLayout from "../../Layout/AdminLayout";
 import { EditFilled } from "@ant-design/icons";
 import { trimData, http } from "../../../modules/module";
 import { useState, useEffect } from "react";
+import swal from "sweetalert";
 const { Item } = Form;
 const Branding = () => {
 
@@ -10,7 +11,7 @@ const Branding = () => {
     const [photo, setPhoto] = useState(null);
     const [bankForm] = Form.useForm();
     const [messageApi, context] = message.useMessage();
-    const [brandings, setBrandings] = useState([]);
+    const [brandings, setBrandings] = useState(null);
     const [no, setNo] = useState(0);
     const [edit, setEdit] = useState(false);
 
@@ -19,16 +20,15 @@ const Branding = () => {
         try {
             const httpReq = http();
             const { data } = await httpReq.get("api/branding");
-            const record = data?.data[0] || {};
-            setBrandings(record);
-
-            bankForm.setFieldsValue(record);
-            console.log(data);
+            console.log(data?.data[0]);
+            bankForm.setFieldsValue(data.data[0]);
+            setBrandings(data.data[0]);
+            setEdit(true);
 
 
         }
         catch (err) {
-            messageApi.success("Unable to fetch the employees data!");
+            messageApi.error("Unable to fetch the branding data!");
 
         }
     }
@@ -43,7 +43,8 @@ const Branding = () => {
             const formData = new FormData();
             formData.append("photo", file);
             const httpReq = http();
-            const { data } = await httpReq.post("/api/upload", formData);
+            const { data } = await httpReq.post("/api/uploads", formData);
+
             setPhoto(data.filePath);
             setNo(no + 1);
 
@@ -51,6 +52,31 @@ const Branding = () => {
         catch (err) {
             messageApi.error("Unable to upload!")
 
+        }
+
+    }
+
+
+    const onUpdate = async (values) => {
+        try {
+            setLoading(true);
+            const finalObj = trimData(values);
+            if (photo) {
+                finalObj.bankLogo = photo;
+            }
+            const httpReq = http();
+            await httpReq.put(`/api/branding/${brandings._id}`, finalObj);
+            messageApi.success("Branding updated successfully");
+
+            setPhoto(null);
+            setNo(no + 1);
+        }
+        catch (err) {
+            messageApi.error("Unable to update branding!")
+
+        }
+        finally {
+            setLoading(false);
         }
 
     }
@@ -71,9 +97,9 @@ const Branding = () => {
             const httpReq = http();
             await httpReq.post("/api/branding", finalObj);
             await httpReq.post("/api/users", userInfo);
-            messageApi.success("Branding created successfully!");
+            swal("Success", "Branding created successfully!", "success");
             setNo(no + 1);
-            bankForm.resetFields();
+
 
 
         } catch (err) {
@@ -90,11 +116,12 @@ const Branding = () => {
             {context}
             <Card
                 title="Bank Details"
-                extra={<Button icon={<EditFilled />} > Edit </Button>}>
+                extra={<Button icon={<EditFilled />} onClick={() => setEdit(!edit)}></Button>}>
                 <Form
                     form={bankForm}
                     layout="vertical"
-                    onFinish={onFinish}>
+                    onFinish={brandings ? onUpdate : onFinish}
+                    disabled={edit}>
                     <div className="grid md:grid-cols-3 gap-x-3">
                         <Item
                             label="Bank Name"
@@ -132,28 +159,28 @@ const Branding = () => {
                             rules={[{ required: true }]}>
                             <Input />
                         </Item>
-                        {!edit &&
+                        {!brandings && (
                             <>
                                 <Item
                                     label="Admin Fullname"
                                     name="fullname"
-                                    rules={[{ required: true }]}>
+                                    rules={[{ required: `${brandings ? false : true}` }]}>
                                     <Input />
                                 </Item>
                                 <Item
                                     label="Admin Email"
                                     name="email"
-                                    rules={[{ required: true }]}>
+                                    rules={[{ required: `${edit ? false : true}` }]}>
                                     <Input />
                                 </Item>
                                 <Item
                                     label="Admin Password"
                                     name="password"
-                                    rules={[{ required: true }]}>
+                                    rules={[{ required: `${edit ? false : true}` }]}>
                                     <Input type="password" />
                                 </Item>
                             </>
-                        }
+                        )}
                         <Item
                             label="Bank LinkedIn"
                             name="bankLinkedIn">
@@ -175,16 +202,28 @@ const Branding = () => {
                         name="bankDesc">
                         <Input.TextArea />
                     </Item>
-                    <Item className="flex justify-end  items-center">
-                        <Button
-                            loading={loading}
-                            type="text"
-                            htmlType="submit"
-                            className="!bg-blue-500 !text-white !font-bold">
-                            Submit
-                        </Button>
-                    </Item>
+                    {brandings ?
+                        <Item className="flex justify-end  items-center">
+                            <Button
+                                loading={loading}
+                                type="text"
+                                htmlType="submit"
+                                className="!bg-rose-500 !text-white !font-bold">
+                                Update
+                            </Button>
+                        </Item>
+                        :
+                        <Item className="flex justify-end  items-center">
+                            <Button
+                                loading={loading}
+                                type="text"
+                                htmlType="submit"
+                                className="!bg-blue-500 !text-white !font-bold">
+                                Submit
+                            </Button>
+                        </Item>
 
+                    }
 
                 </Form>
             </Card>

@@ -4,7 +4,7 @@ import axios from "axios";
 export const http = (accessToken = null) => {
     axios.defaults.baseURL = import.meta.env.VITE_BASEURL;
     if (accessToken) {
-        axios.defaults.headers.common('Authorization') = `Bearer ${accessToken}`;
+        axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
     }
     return axios;
 }
@@ -14,4 +14,18 @@ export const trimData = (obj) => {
         finalObj[key] = obj[key]?.trim();
     }
     return finalObj;
+}
+
+//fetcher
+export const fetchData = async (api) => {
+    try {
+
+        const httpReq = http();
+        const { data } = await httpReq.get(api);
+        return data;
+
+    } catch (err) {
+        return null;
+    }
+
 }

@@ -37,9 +37,15 @@ const deleteRecord = async (id, schema) => {
     return dbRes;
 }
 
+const findOneRecord = async (query, schema) => {
+    const dbRes = await schema.findOne(query);
+    return dbRes;
+}
+
 module.exports = {
     findAllRecord,
     createNewRecord,
     updateRecord,
-    deleteRecord
+    deleteRecord,
+    findOneRecord
 }

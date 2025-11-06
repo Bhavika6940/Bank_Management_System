@@ -13,6 +13,10 @@ const usersRouter = require("./routes/users.routes");
 const uploadRouter = require("./routes/uploads.routes");
 const emailRouter = require("./routes/send-email.routes");
 const brandingRouter = require("./routes/branding.routes");
+const branchRouter = require("./routes/branch.routes");
+const currencyRouter = require("./routes/currency.routes");
+const loginRouter = require("./routes/login.routes");
+const verifyRouter = require("./routes/verify.routes");
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -36,7 +40,10 @@ app.use("/api/users", usersRouter);
 app.use("/api/uploads", uploadRouter);
 app.use("/api/send-email", emailRouter);
 app.use("/api/branding", brandingRouter);
-
+app.use("/api/branch", branchRouter);
+app.use("/api/currency", currencyRouter);
+app.use("/api/login",loginRouter);
+app.use("/api/verify", verifyRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

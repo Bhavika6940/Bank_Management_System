@@ -1,13 +1,69 @@
-import { Card, Form, Input, Button } from "antd";
+import { Card, Form, Input, Button, message } from "antd";
 import { LockOutlined, UserOutlined } from "@ant-design/icons"
-const { Item } = Form
+import { trimData, http } from "../../modules/module";
+import Cookies from "universal-cookie"
+import { useNavigate } from "react-router-dom"
+
+const { Item } = Form;
 
 const Login = () => {
-    const onFinish = (values) => {
-        console.log(values);
+
+    const cookies = new Cookies();
+    const expires = new Date();
+    expires.setDate(expires.getDate() + 3);
+    const navigate = new useNavigate();
+
+
+    const [messageApi, context] = message.useMessage();
+
+    const onFinish = async (values) => {
+        try {
+
+            const finalObj = trimData(values);
+            console.log(finalObj);
+            const httpReq = http();
+            const { data } = await httpReq.post("/api/login", finalObj);
+            if (data?.isLogged && data?.userType === "admin") {
+                const { token } = data;
+                cookies.set("authToken", token, {
+                    path: "/",  //can be read from anywhere inside the entire application
+                    expires: expires
+                });
+                messageApi.success("Login success!");
+                navigate("/admin");
+            }
+            else if (data?.isLogged && data?.userType === "employee") {
+                const { token } = data;
+                cookies.set("authToken", token, {
+                    path: "/",  //can be read from anywhere inside the entire application
+                    expires: expires
+                });
+                messageApi.success("Login success!");
+                navigate("/employee");
+            }
+            else if (data?.isLogged && data?.userType === "customer") {
+                const { token } = data;
+                cookies.set("authToken", token, {
+                    path: "/",  //can be read from anywhere inside the entire application
+                    expires: expires
+                });
+                messageApi.success("Login success!");
+                navigate("/customer");
+            }
+            else {
+                return message.warning("Wrong credentials!")
+            }
+
+        } catch (err) {
+            messageApi.error(err?.response?.data?.message);
+
+        }
     }
+
+    
     return (
         <div className="flex">
+            {context}
             <div className="w-1/2 hidden md:flex items-center justify-center">
                 <img src="public/bank-img.jpg"
                     alt="Bank"
@@ -27,16 +83,16 @@ const Login = () => {
                     >
                         <Item
                             className="mt-5"
-                            name="username"
+                            name="email"
                             label="Username"
                             rules={[{ required: true }]}>
-                            <Input prefix={<UserOutlined />} placeholder="Enter your username"></Input>
+                            <Input prefix={<UserOutlined />} placeholder="Enter your username" />
                         </Item>
                         <Item
                             name="password"
                             label="Password"
                             rules={[{ required: true }]}>
-                            <Input prefix={<LockOutlined />} placeholder="Enter your password"></Input>
+                            <Input.Password prefix={<LockOutlined />} placeholder="Enter your password" type="password" />
                         </Item>
                         <Item>
                             <Button

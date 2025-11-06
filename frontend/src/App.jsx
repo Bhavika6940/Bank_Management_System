@@ -1,19 +1,54 @@
+import Guard from "../components/Guard"
+import Loader from "../components/Loader";
+import { lazy, Suspense } from "react";
+
+
+const HomePage = lazy(() => import("../components/Home"));
+const Dashboard = lazy(() => import("../components/Admin"));
+const NewEmployee = lazy(() => import("../components/Admin/NewEmployee"));
+const Branding = lazy(() => import("../components/Admin/Branding"));
+const PageNotFound = lazy(() => import("../components/PageNotFound"));
+const Branch = lazy(() => import("../components/Admin/Branch"));
+const Currency = lazy(() => import("../components/Admin/Currency"));
+const EmployeeDashboard = lazy(() => import("../components/Employee"))
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import HomePage from "../components/Home";
-import Dashboard from "../components/Admin";
-import NewEmployee from "../components/Admin/NewEmployee";
-import Branding from "../components/Admin/Branding";
-import PageNotFound from "../components/PageNotFound";
+
+
+
+
+
+
 const App = () => {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/admin" element={<Dashboard />} />
-        <Route path="/admin/new-employee" element={<NewEmployee />} />
-        <Route path="/admin/branding" element={<Branding />} />
-        <Route path="/*" element={<PageNotFound />} />
-      </Routes>
+      <Suspense fallback={<Loader />}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+
+          {/* Start admin related routes */}
+          <Route path="/admin/" element={<Guard endpoint={"/api/verify"} role="admin" />} >
+            <Route index element={<Dashboard />} />
+            <Route path="new-employee" element={<NewEmployee />} />
+            <Route path="branding" element={<Branding />} />
+            <Route path="branch" element={<Branch />} />
+            <Route path="currency" element={<Currency />} />
+            <Route path="*" element={<PageNotFound />} />
+
+          </Route>
+          {/* End admin related routes */}
+
+          {/* Start employee related routes */}
+          <Route path="/employee/" element={<Guard endpoint={"/api/verify-token"} role="employee" />}>
+            <Route index element={<EmployeeDashboard />} />
+            <Route path="*" element={<PageNotFound />} />
+
+          </Route>
+
+          {/* End employee related routes */}
+
+          <Route path="/*" element={<PageNotFound />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   )
 }

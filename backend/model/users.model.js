@@ -3,6 +3,7 @@ const { Schema } = mongo;
 const bcrypt = require("bcrypt");
 const userSchema = new Schema({
     fullname: String,
+    userType: String,
     mobile: String,
     email: {
         type: String,
@@ -12,6 +13,7 @@ const userSchema = new Schema({
     password: String,
     profile: String,
     address: String,
+    branch: String,
     userType: String,
     isActive: {
         type: Boolean,
