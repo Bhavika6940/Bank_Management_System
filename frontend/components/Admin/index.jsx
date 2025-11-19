@@ -1,14 +1,27 @@
-import AdminLayout from "../Layout/AdminLayout"
+import AdminLayout from "../Layout/AdminLayout";
+import Dashboard from "../Shared/Dashboard";
+import useSWR from "swr";
+import { fetchData } from "../../modules/module";
 
+const AdminDashboard = () => {
+    //get userInfo from sessionStorage
+    const userInfo = JSON.parse(sessionStorage.getItem("userInfo"));
+    const { data: trData, error: trError } = useSWR(
+        `/api/transaction/summary?branch=${userInfo.branch}`,
+        fetchData,
+        {
+            revalidateOnocus: false,
+            revalidateOnReconnect: false,
+            refreshInterval: 1200000
 
-const Dashboard = () => {
+        }
+    );
+    console.log(trData);
     return (
         <AdminLayout>
-            <h1 className="text-5xl font-bold text-red-500">
-                Admin Dashboard
-            </h1>
+            <Dashboard data={trData && trData} />
         </AdminLayout>
-    )
-}
+    );
+};
 
-export default Dashboard;
+export default AdminDashboard;

@@ -2,6 +2,8 @@ require("dotenv").config();
 const dbService = require("../services/db.service");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const Customers = require("../model/customer.model");
+
 const loginFunc = async (req, res, schema) => {
     try {
         const { email, password } = req.body;
@@ -16,14 +18,27 @@ const loginFunc = async (req, res, schema) => {
             if (isMatch) {
                 if (dbRes.isActive) {
                     delete dbRes._doc.password;
-                    const payload = {
-                        ...dbRes._doc,
-                        _id: dbRes._id.toString()
+                    const db = await Customers.findOne(
+                        { email },
+                        { _id: 0, accountNo: 1 }
+                    );
+                    let payload = null;
 
-                    }
+                    db ?
+                        payload = {
+                            ...dbRes._doc,
+                            _id: dbRes._id.toString(),
+                            accountNo: db.accountNo
+
+                        } :
+                        payload = {
+                            ...dbRes._doc,
+                            _id: dbRes._id.toString()
+
+                        }
                     const token = await jwt.sign(
                         payload,
-                        process.env.JWT_TOKEN,
+                        process.env.JWT_SECRET_KEY,
                         { expiresIn: "3h" }
                     )
 
@@ -31,7 +46,7 @@ const loginFunc = async (req, res, schema) => {
                         message: "Data found!",
                         isLogged: true,
                         token,
-                        userType : dbRes._doc.userType
+                        userType: dbRes._doc.userType
 
                     })
                 } else {

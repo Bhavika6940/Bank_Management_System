@@ -20,7 +20,7 @@ const verifyToken = async (req, res) => {
     try {
         const decoded = await jwt.verify(
             token,
-            process.env.JWT_TOKEN
+            process.env.JWT_SECRET_KEY
         );
         return {
             message: "Token verified !",

@@ -2,15 +2,20 @@ import { data } from "react-router-dom";
 import AdminLayout from "../../Layout/AdminLayout";
 import { Card, Form, Input, Button, Table, message, Popconfirm, Select } from "antd";
 import { EyeOutlined, EyeInvisibleOutlined, EditOutlined, DeleteOutlined as DeletedOutlined, SearchOutlined } from '@ant-design/icons';
-import { trimData, http, fetchData } from "../../../modules/module";
+import { trimData, http, fetchData, uploadFile } from "../../../modules/module";
 import swal from "sweetalert";
 import useSWR from "swr";
 import { useState, useEffect } from "react";
+import Cookies from "universal-cookie"
+const cookies = new Cookies();
 
 
 
 const { Item } = Form;
 const NewEmployee = () => {
+
+    const token = cookies.get("authToken");
+
 
     //states collection
     const [form] = Form.useForm();
@@ -162,22 +167,22 @@ const NewEmployee = () => {
     //update employee
     const onUpdateUser = (obj) => {
         setEdit(obj);
-        const { profile, ...rest } = obj;
-        form.setFieldsValue(rest);
+        form.setFieldsValue(obj);
     }
 
     const onUpdate = async (values) => {
         try {
             setLoading(true);
             let finalObj = trimData(values);
+            delete finalObj.password;
             if (photo) {
                 finalObj.profile = photo;
             }
-            const httpReq = http();
+            const httpReq = http(token);
             const res = await httpReq.put(`/api/users/${edit._id}`, finalObj);
             messageApi.success("Employee updated successfully!");
             setNo(no + 1);
-            console.log(res);
+            setPhoto(null);
             form.resetFields();
         }
         catch (err) {
@@ -193,7 +198,7 @@ const NewEmployee = () => {
     //delete employee
     const DeleteUser = async (id) => {
         try {
-            const httpReq = http();
+            const httpReq = http(token);
             const res = await httpReq.delete(`/api/users/${id}`);
             messageApi.success("Record deleted successfully!");
             setNo(no + 1);
@@ -207,7 +212,7 @@ const NewEmployee = () => {
     //update active status of a employee
     const UpdateIsActive = async (id, isActive) => {
         try {
-            const httpReq = http();
+            const httpReq = http(token);
             const obj = {
                 isActive: !isActive
             }
@@ -225,9 +230,11 @@ const NewEmployee = () => {
     }
     const fetchEmployees = async () => {
         try {
-            const httpReq = http();
+            const httpReq = http(token);
             const { data } = await httpReq.get("/api/users");
-            setAllEmployees(data.data);   //show in table
+            setAllEmployees(
+                data?.data.filter((item) => item.userType != "customer")
+            );   //show in table
             setFinalEmployees(data.data);   //keep the full backup
             console.log(data.data)
         } catch (err) {
@@ -241,19 +248,15 @@ const NewEmployee = () => {
     }, [no]);
 
     const handleUpload = async (e) => {
+        const file = e.target.files[0];
+        const folderName = "employeePhoto";
         try {
-            let file = e.target.files[0];
-            const formData = new FormData();
-            console.log(file);
-            formData.append("photo", file);
-            const httpReq = http();
-            const { data } = await httpReq.post("/api/uploads", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
-            messageApi.success("Photo uploaded successfully!");
-            setPhoto(data.filePath);
+            const result = await uploadFile(file, folderName);
+            console.log(result.filePath);
+            setPhoto(result.filePath);
+            messageApi.success("File uploaded successfully!")
         } catch (err) {
-            messageApi("Unable to upload!");
+            messageApi.error("Upload failed");
         }
     }
 
@@ -261,22 +264,22 @@ const NewEmployee = () => {
     const onSearch = (e) => {
         let value = e.target.value.trim().toLowerCase();
         let filter = finalEmployees && finalEmployees.filter(emp => {
-            if (emp.fullname.toLowerCase().indexOf(value) != -1) {
+            if (emp?.fullname.toLowerCase().indexOf(value) != -1) {
                 return emp;
             }
-            else if (emp.branch.toLowerCase().indexOf(value) != -1) {
+            else if (emp?.branch.toLowerCase().indexOf(value) != -1) {
                 return emp;
             }
-            else if (emp.userType.toLowerCase().indexOf(value) != -1) {
+            else if (emp?.userType.toLowerCase().indexOf(value) != -1) {
                 return emp;
             }
-            else if (emp.email.toLowerCase().indexOf(value) != -1) {
+            else if (emp?.email.toLowerCase().indexOf(value) != -1) {
                 return emp;
             }
-            else if (emp.address.toLowerCase().indexOf(value) != -1) {
+            else if (emp?.address.toLowerCase().indexOf(value) != -1) {
                 return emp;
             }
-            else if (emp.mobile.toLowerCase().indexOf(value) != -1) {
+            else if (emp?.mobile.toLowerCase().indexOf(value) != -1) {
                 return emp;
             }
         });
@@ -292,7 +295,7 @@ const NewEmployee = () => {
             finalObj.userType = "employee"
             finalObj.key = finalObj.email;
             console.log(finalObj);
-            const httpReq = http();
+            const httpReq = http(token);
             const { data } = await httpReq.post(`/api/users`, finalObj);
 
             const obj = {
@@ -307,6 +310,7 @@ const NewEmployee = () => {
 
             console.log(data);
             swal("Success", "Employee added successfully!", "success");
+            setPhoto(null);
             setNo(no + 1);
             setEdit(null);
             form.resetFields();
@@ -348,7 +352,7 @@ const NewEmployee = () => {
                         </Item>
                         <Item
                             label="Profile :"
-                            name="profile">
+                            name="xyz">
                             <Input type="file" onChange={handleUpload}></Input>
                         </Item>
                         <div className="grid md: grid-cols-2 gap-x-2">
@@ -371,7 +375,7 @@ const NewEmployee = () => {
                                 name="email"
                                 label="Email :"
                                 rules={[{ required: true, message: "Please enter email!" }]}>
-                                <Input></Input>
+                                <Input disabled={edit ? true : false} />
                             </Item>
                             <Item
                                 name="password"

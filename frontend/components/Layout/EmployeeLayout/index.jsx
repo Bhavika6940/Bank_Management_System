@@ -3,12 +3,30 @@ import {
     MenuFoldOutlined,
     MenuUnfoldOutlined,
     DashboardOutlined,
+    LogoutOutlined,
+    AccountBookOutlined,
+    BranchesOutlined
 } from '@ant-design/icons';
 import { Button, Layout, Menu, theme } from 'antd';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import Cookies from "universal-cookie";
+
+
+
+
 const { Header, Sider, Content } = Layout;
 
 const EmployeeLayout = ({ children }) => {
+
+    const cookies = new Cookies();
+    const navigate = useNavigate();
+
+    //logout calling
+    const logoutFunc = () => {
+        sessionStorage.removeItem("userInfo");
+        cookies.remove("authToken");
+        navigate("/");
+    }
 
     const { pathname } = useLocation();
     console.log(pathname);
@@ -17,6 +35,26 @@ const EmployeeLayout = ({ children }) => {
             key: '/employee',
             icon: <DashboardOutlined />,
             label: <Link to="/employee">Dashboard</Link>,
+        },
+        {
+            key: '/employee/new-account',
+            icon: <AccountBookOutlined />,
+            label: <Link to="/employee/new-account">New Account</Link>,
+        },
+        {
+            key: '/employee/new-transaction',
+            icon: <BranchesOutlined />,
+            label: <Link to="/employee/new-transaction">New Transaction</Link>,
+        },
+        {
+            key: '/employee/logout',
+            icon: <LogoutOutlined />,
+            label: <Button
+                type="text"
+                className="!text-gray-300 !font-semibold"
+                onClick={logoutFunc}
+
+            >Logout</Button>
         }
     ];
     const [collapsed, setCollapsed] = useState(false);
